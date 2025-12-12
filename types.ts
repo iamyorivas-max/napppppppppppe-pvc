@@ -1,3 +1,5 @@
+import React from 'react';
+
 export enum TableShape {
   RECTANGLE = 'Rectangle',
   ROUND = 'Round',
