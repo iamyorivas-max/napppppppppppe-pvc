@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { TableShape } from '../types';
-import Button from './ui/Button';
+import { TableShape } from '../types.ts';
+import Button from './ui/Button.tsx';
 import { Calculator, ArrowRight, Check, ShoppingCart, Loader2 } from 'lucide-react';
 
 const PriceCalculator: React.FC = () => {
@@ -256,4 +256,38 @@ const PriceCalculator: React.FC = () => {
                     
                     <div>
                       <label className="block text-sm font-medium text-slate-700 mb-1">Phone Number</label>
-                      
+                      <input name="phone" type="tel" required className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none" placeholder="+1 (555) 000-0000" />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-slate-700 mb-1">Delivery Address</label>
+                      <textarea name="address" required rows={3} className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none" placeholder="123 Main St, City, Country"></textarea>
+                    </div>
+
+                    {error && <p className="text-red-500 text-sm bg-red-50 p-2 rounded">{error}</p>}
+
+                    <div className="flex gap-3 pt-2">
+                       <Button type="button" variant="secondary" onClick={() => setShowOrderForm(false)} disabled={isSubmitting}>
+                         Cancel
+                       </Button>
+                       <Button type="submit" className="flex-1 bg-green-600 hover:bg-green-700" disabled={isSubmitting}>
+                         {isSubmitting ? (
+                           <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Processing...</>
+                         ) : (
+                           <><ShoppingCart className="w-4 h-4 mr-2" /> Place Order</>
+                         )}
+                       </Button>
+                    </div>
+                    <p className="text-xs text-slate-400 text-center mt-2">Payment will be collected upon confirmation.</p>
+                  </form>
+                )}
+              </div>
+            )}
+          </>
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default PriceCalculator;
