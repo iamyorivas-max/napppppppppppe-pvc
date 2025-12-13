@@ -1,6 +1,6 @@
 import React from 'react';
 import { Star } from 'lucide-react';
-import { Review } from '../types.ts';
+import { Review } from '../types';
 
 const reviews: Review[] = [
   {

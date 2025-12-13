@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { TableShape } from '../types.ts';
-import Button from './ui/Button.tsx';
+import { TableShape } from '../types';
+import Button from './ui/Button';
 import { Calculator, ArrowRight, Check, ShoppingCart, Loader2 } from 'lucide-react';
 
 const PriceCalculator: React.FC = () => {

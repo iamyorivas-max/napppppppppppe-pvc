@@ -1,6 +1,6 @@
 import React from 'react';
 import { Droplets, Shield, Sparkles, Maximize, Scissors, Sun } from 'lucide-react';
-import { Feature } from '../types.ts';
+import { Feature } from '../types';
 
 const features: Feature[] = [
   {

@@ -1,6 +1,6 @@
 import React from 'react';
-import Button from './ui/Button.tsx';
-import PriceCalculator from './PriceCalculator.tsx';
+import Button from './ui/Button';
+import PriceCalculator from './PriceCalculator';
 import { ShieldCheck, Star } from 'lucide-react';
 
 const Hero: React.FC = () => {

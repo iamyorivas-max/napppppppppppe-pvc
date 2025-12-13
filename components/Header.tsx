@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Menu, X, ShoppingBag } from 'lucide-react';
-import Button from './ui/Button.tsx';
+import Button from './ui/Button';
 
 const Header: React.FC = () => {
   const [isScrolled, setIsScrolled] = useState(false);
