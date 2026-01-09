@@ -2,9 +2,15 @@ import React from 'react';
 
 export enum TableShape {
   RECTANGLE = 'Rectangle',
-  ROUND = 'Round',
-  OVAL = 'Oval',
-  SQUARE = 'Square'
+  ROUND = 'Ronde',
+  OVAL = 'Ovale',
+  SQUARE = 'Carrée'
+}
+
+export enum TableThickness {
+  T15 = '1.5mm',
+  T20 = '2.0mm',
+  T30 = '3.0mm'
 }
 
 export interface Review {

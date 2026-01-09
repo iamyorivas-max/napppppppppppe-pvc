@@ -1,55 +1,18 @@
 import React, { useState } from 'react';
-import { TableShape } from '../types';
+import { TableShape, TableThickness } from '../types';
 import Button from './ui/Button';
-import { Calculator, ArrowRight, Check, ShoppingCart, Loader2 } from 'lucide-react';
+import { ShoppingCart, Check, Loader2, Ruler, ClipboardList, User } from 'lucide-react';
 
 const PriceCalculator: React.FC = () => {
   const [shape, setShape] = useState<TableShape>(TableShape.RECTANGLE);
+  const [thickness, setThickness] = useState<TableThickness>(TableThickness.T20);
   const [length, setLength] = useState<string>('');
   const [width, setWidth] = useState<string>('');
   const [diameter, setDiameter] = useState<string>('');
-  const [calculatedPrice, setCalculatedPrice] = useState<number | null>(null);
-
-  // Form handling state
-  const [showOrderForm, setShowOrderForm] = useState(false);
+  
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  const handleCalculate = (e: React.FormEvent) => {
-    e.preventDefault();
-    setShowOrderForm(false);
-    setSubmitSuccess(false);
-
-    let area = 0;
-    // Pricing logic: $0.005 per square cm + $15 base fee
-    const baseFee = 15;
-    const pricePerSqCm = 0.005;
-
-    if (shape === TableShape.RECTANGLE || shape === TableShape.OVAL) {
-      const l = parseFloat(length);
-      const w = parseFloat(width);
-      if (!isNaN(l) && !isNaN(w)) {
-        area = l * w;
-      }
-    } else if (shape === TableShape.SQUARE) {
-      const l = parseFloat(length);
-      if (!isNaN(l)) {
-        area = l * l;
-      }
-    } else if (shape === TableShape.ROUND) {
-      const d = parseFloat(diameter);
-      if (!isNaN(d)) {
-        const r = d / 2;
-        area = Math.PI * r * r;
-      }
-    }
-
-    if (area > 0) {
-      const price = baseFee + (area * pricePerSqCm);
-      setCalculatedPrice(Math.round(price * 100) / 100);
-    }
-  };
 
   const handleOrderSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -57,6 +20,15 @@ const PriceCalculator: React.FC = () => {
     setError(null);
 
     const formData = new FormData(e.currentTarget);
+    
+    // Add calculated dimensions to the form data
+    const dimensions = shape === TableShape.ROUND 
+      ? `Diamètre: ${diameter}cm` 
+      : shape === TableShape.SQUARE 
+        ? `Côté: ${length}cm` 
+        : `L: ${length}cm x l: ${width}cm`;
+    
+    formData.append('dimensions_detaillees', dimensions);
 
     try {
       const response = await fetch("https://formspree.io/f/movgydnl", {
@@ -69,7 +41,6 @@ const PriceCalculator: React.FC = () => {
 
       if (response.ok) {
         setSubmitSuccess(true);
-        setShowOrderForm(false);
         // Reset fields
         setLength('');
         setWidth('');
@@ -79,211 +50,194 @@ const PriceCalculator: React.FC = () => {
         if (Object.prototype.hasOwnProperty.call(data, 'errors')) {
           setError(data["errors"].map((error: any) => error["message"]).join(", "));
         } else {
-          setError("Oops! There was a problem submitting your order.");
+          setError("Une erreur est survenue lors de l'envoi de votre commande.");
         }
       }
     } catch (err) {
-      setError("Oops! There was a problem connecting to the server.");
+      setError("Erreur de connexion au serveur.");
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const getDimensionsString = () => {
-    if (shape === TableShape.ROUND) return `Diameter: ${diameter}cm`;
-    if (shape === TableShape.SQUARE) return `Side: ${length}cm`;
-    return `Length: ${length}cm, Width: ${width}cm`;
-  };
-
   return (
-    <div id="calculator" className="bg-white rounded-2xl shadow-xl overflow-hidden border border-slate-100">
+    <div id="calculator" className="bg-white rounded-2xl shadow-xl overflow-hidden border border-slate-100 transition-all duration-300">
       <div className="bg-secondary p-6 text-white text-center">
-        <Calculator className="w-10 h-10 mx-auto mb-3 text-primary" />
-        <h3 className="text-2xl font-bold">Instant Price Calculator</h3>
-        <p className="text-slate-300 text-sm mt-1">Get a quote & order in seconds.</p>
+        <ShoppingCart className="w-10 h-10 mx-auto mb-3 text-primary" />
+        <h3 className="text-2xl font-bold">Commander Votre Protection</h3>
+        <p className="text-slate-300 text-sm mt-1">Sur-mesure, livré rapidement chez vous.</p>
       </div>
       
-      <div className="p-8">
+      <div className="p-6">
         {submitSuccess ? (
-          <div className="text-center py-8 animate-fade-in-up">
+          <div className="text-center py-12 animate-fade-in-up">
             <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4 text-green-600">
               <Check className="w-8 h-8" />
             </div>
-            <h4 className="text-xl font-bold text-slate-900 mb-2">Order Received!</h4>
-            <p className="text-slate-600 mb-6">Thank you for your order. We will contact you shortly to confirm details and payment.</p>
-            <Button onClick={() => {
-              setSubmitSuccess(false);
-              setCalculatedPrice(null);
-            }}>Calculate Another</Button>
+            <h4 className="text-xl font-bold text-slate-900 mb-2">Commande Reçue !</h4>
+            <p className="text-slate-600 mb-6">Merci pour votre confiance. Nous vous contacterons sous 24h pour confirmer les détails et la livraison.</p>
+            <Button onClick={() => setSubmitSuccess(false)}>Passer une autre commande</Button>
           </div>
         ) : (
-          <>
-            <form onSubmit={handleCalculate} className="space-y-6">
-              {/* Shape Selection */}
+          <form onSubmit={handleOrderSubmit} className="space-y-6">
+            {/* Section 1: Produit */}
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 text-primary font-bold text-sm uppercase tracking-wider">
+                <ClipboardList className="w-4 h-4" /> 1. Configuration
+              </div>
+              
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">Select Your Table Shape</label>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                <label className="block text-xs font-semibold text-slate-500 mb-2 uppercase">Forme de la table</label>
+                <div className="grid grid-cols-2 gap-2">
                   {Object.values(TableShape).map((s) => (
                     <button
                       key={s}
                       type="button"
-                      onClick={() => {
-                        setShape(s);
-                        setCalculatedPrice(null);
-                        setShowOrderForm(false);
-                      }}
-                      className={`px-4 py-3 rounded-lg border text-sm font-medium transition-all ${
+                      onClick={() => setShape(s)}
+                      className={`px-3 py-2 rounded-lg border text-sm font-medium transition-all ${
                         shape === s 
-                          ? 'border-primary bg-primary/10 text-primary ring-2 ring-primary ring-opacity-50' 
+                          ? 'border-primary bg-primary/10 text-primary ring-2 ring-primary ring-opacity-20' 
                           : 'border-slate-200 text-slate-600 hover:border-primary/50'
                       }`}
-                      disabled={showOrderForm}
                     >
+                      <input type="radio" name="forme" value={s} checked={shape === s} className="hidden" readOnly />
                       {s}
                     </button>
                   ))}
                 </div>
               </div>
 
-              {/* Dimensions Inputs */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-semibold text-slate-500 mb-2 uppercase">Épaisseur du PVC</label>
+                <div className="grid grid-cols-3 gap-2">
+                  {Object.values(TableThickness).map((t) => (
+                    <button
+                      key={t}
+                      type="button"
+                      onClick={() => setThickness(t)}
+                      className={`px-3 py-2 rounded-lg border text-sm font-medium transition-all ${
+                        thickness === t 
+                          ? 'border-primary bg-primary/10 text-primary ring-2 ring-primary ring-opacity-20' 
+                          : 'border-slate-200 text-slate-600 hover:border-primary/50'
+                      }`}
+                    >
+                      <input type="radio" name="epaisseur" value={t} checked={thickness === t} className="hidden" readOnly />
+                      {t}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Section 2: Dimensions */}
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 text-primary font-bold text-sm uppercase tracking-wider">
+                <Ruler className="w-4 h-4" /> 2. Dimensions (cm)
+              </div>
+              
+              <div className="grid grid-cols-2 gap-3">
                 {(shape === TableShape.RECTANGLE || shape === TableShape.OVAL) && (
                   <>
                     <div>
-                      <label className="block text-sm font-medium text-slate-700 mb-1">Length (cm)</label>
                       <input
                         type="number"
+                        name="longueur"
                         value={length}
                         onChange={(e) => setLength(e.target.value)}
-                        className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none"
-                        placeholder="e.g. 200"
+                        className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none text-sm"
+                        placeholder="Long. (cm)"
                         required
-                        disabled={showOrderForm}
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-slate-700 mb-1">Width (cm)</label>
                       <input
                         type="number"
+                        name="largeur"
                         value={width}
                         onChange={(e) => setWidth(e.target.value)}
-                        className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none"
-                        placeholder="e.g. 90"
+                        className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none text-sm"
+                        placeholder="Larg. (cm)"
                         required
-                        disabled={showOrderForm}
                       />
                     </div>
                   </>
                 )}
 
                 {shape === TableShape.SQUARE && (
-                   <div>
-                   <label className="block text-sm font-medium text-slate-700 mb-1">Side Length (cm)</label>
+                   <div className="col-span-2">
                    <input
                      type="number"
+                     name="cote"
                      value={length}
                      onChange={(e) => setLength(e.target.value)}
-                     className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none"
-                     placeholder="e.g. 100"
+                     className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none text-sm"
+                     placeholder="Côté (cm)"
                      required
-                     disabled={showOrderForm}
                    />
                  </div>
                 )}
 
                 {shape === TableShape.ROUND && (
-                   <div className="md:col-span-2">
-                   <label className="block text-sm font-medium text-slate-700 mb-1">Diameter (cm)</label>
+                   <div className="col-span-2">
                    <input
                      type="number"
+                     name="diametre"
                      value={diameter}
                      onChange={(e) => setDiameter(e.target.value)}
-                     className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none"
-                     placeholder="e.g. 120"
+                     className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none text-sm"
+                     placeholder="Diamètre (cm)"
                      required
-                     disabled={showOrderForm}
                    />
                  </div>
                 )}
               </div>
+            </div>
 
-              {!showOrderForm && (
-                <Button type="submit" className="w-full justify-between group">
-                  <span>Calculate Price</span>
-                  <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                </Button>
-              )}
-            </form>
-
-            {/* Result Area */}
-            {calculatedPrice !== null && (
-              <div className="mt-8 animate-fade-in-up">
-                
-                {/* Price Display */}
-                <div className={`p-4 bg-green-50 border border-green-200 rounded-lg transition-opacity duration-300 ${showOrderForm ? 'opacity-80' : 'opacity-100'}`}>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-green-800 font-medium">Estimated Price</p>
-                      <p className="text-3xl font-bold text-green-700">${calculatedPrice.toFixed(2)}</p>
-                    </div>
-                    {!showOrderForm && (
-                      <Button size="sm" className="bg-green-600 hover:bg-green-700" onClick={() => setShowOrderForm(true)}>
-                        Order This Size
-                      </Button>
-                    )}
-                  </div>
-                  {!showOrderForm && (
-                     <div className="mt-2 flex items-center text-xs text-green-700">
-                      <Check className="w-3 h-3 mr-1" /> Includes free customization
-                    </div>
-                  )}
-                </div>
-
-                {/* Order Form */}
-                {showOrderForm && (
-                  <form onSubmit={handleOrderSubmit} className="mt-6 space-y-4 pt-6 border-t border-slate-100 animate-fade-in-up">
-                    <h4 className="font-semibold text-slate-900 mb-2">Enter Shipping Details</h4>
-                    
-                    {/* Hidden fields for Formspree */}
-                    <input type="hidden" name="product_shape" value={shape} />
-                    <input type="hidden" name="product_dimensions" value={getDimensionsString()} />
-                    <input type="hidden" name="estimated_price" value={`$${calculatedPrice.toFixed(2)}`} />
-
-                    <div>
-                      <label className="block text-sm font-medium text-slate-700 mb-1">Full Name</label>
-                      <input name="name" type="text" required className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none" placeholder="John Doe" />
-                    </div>
-                    
-                    <div>
-                      <label className="block text-sm font-medium text-slate-700 mb-1">Phone Number</label>
-                      <input name="phone" type="tel" required className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none" placeholder="+1 (555) 000-0000" />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-slate-700 mb-1">Delivery Address</label>
-                      <textarea name="address" required rows={3} className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none" placeholder="123 Main St, City, Country"></textarea>
-                    </div>
-
-                    {error && <p className="text-red-500 text-sm bg-red-50 p-2 rounded">{error}</p>}
-
-                    <div className="flex gap-3 pt-2">
-                       <Button type="button" variant="secondary" onClick={() => setShowOrderForm(false)} disabled={isSubmitting}>
-                         Cancel
-                       </Button>
-                       <Button type="submit" className="flex-1 bg-green-600 hover:bg-green-700" disabled={isSubmitting}>
-                         {isSubmitting ? (
-                           <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Processing...</>
-                         ) : (
-                           <><ShoppingCart className="w-4 h-4 mr-2" /> Place Order</>
-                         )}
-                       </Button>
-                    </div>
-                    <p className="text-xs text-slate-400 text-center mt-2">Payment will be collected upon confirmation.</p>
-                  </form>
-                )}
+            {/* Section 3: Client */}
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 text-primary font-bold text-sm uppercase tracking-wider">
+                <User className="w-4 h-4" /> 3. Vos Coordonnées
               </div>
-            )}
-          </>
+              
+              <div className="space-y-3">
+                <input 
+                  name="nom_complet" 
+                  type="text" 
+                  required 
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary outline-none text-sm" 
+                  placeholder="Nom complet" 
+                />
+                <input 
+                  name="telephone" 
+                  type="tel" 
+                  required 
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary outline-none text-sm" 
+                  placeholder="Téléphone (ex: 06 12 34 56 78)" 
+                />
+                <input 
+                  name="ville" 
+                  type="text" 
+                  required 
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary outline-none text-sm" 
+                  placeholder="Ville" 
+                />
+              </div>
+            </div>
+
+            {error && <p className="text-red-500 text-xs bg-red-50 p-2 rounded">{error}</p>}
+
+            <Button type="submit" className="w-full bg-green-600 hover:bg-green-700 h-14" disabled={isSubmitting}>
+              {isSubmitting ? (
+                <><Loader2 className="w-5 h-5 mr-2 animate-spin" /> Envoi en cours...</>
+              ) : (
+                <><ShoppingCart className="w-5 h-5 mr-2" /> Valider ma commande</>
+              )}
+            </Button>
+            
+            <p className="text-[10px] text-slate-400 text-center uppercase tracking-widest">
+              Paiement à la livraison après vérification
+            </p>
+          </form>
         )}
       </div>
     </div>
